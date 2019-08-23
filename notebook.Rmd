@@ -1,11 +1,7 @@
 ---
-title: "R Notebook"
+title: "Osu Data Analysis and Visualizations"
 output: html_notebook
 ---
-
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
 
 ```{r}
 library(readr)
@@ -14,7 +10,8 @@ library(tidyr)
 library(ggplot2)
 ```
 ```{r}
-Player <- read_csv("Player.csv",col_names = FALSE)
+
+Player <- read_csv("datasets/Player.csv",col_names = FALSE)
 lables <- c("player_id","name","rank","performance","accuracy","play_count","SS","S","A")
 colnames(Player) <- lables
 Player <- Player %>% select(performance,accuracy,play_count,SS,S,A)
@@ -37,7 +34,6 @@ ggplot(data = Player) +
 This exponential decay would make finding a distribution for performance pretty simple. More on that later. 
 
 ```{r}
-# filter out crazy high play counts
 ggplot(data = Player) +
   geom_point(mapping = aes(x = id, y = play_count), alpha = 1/5)
 
@@ -47,8 +43,6 @@ ggplot(data = Player) +
 Player %>%
   ggplot(mapping = aes(x = id, y = play_count, group = cut_width(id,500))) +
   geom_boxplot()
-
-mean(Player$play_count)
 ```
 We see that play count has some relation to one's performance to their play count. That is, the median play count increases as one's id (rank) increases. The distribution is of play counts is like a skewed normal with mean about 78429. I do expect one's id to correlate with their play count. 
 
@@ -71,11 +65,6 @@ Player %>%
   filter(value<6000) %>%
   ggplot(mapping = aes(x = value, color = key)) + 
   geom_freqpoly(bins = 80) 
-
-#4967 left after filter
-#Player %>% 
-#  filter(SS<6000,S<6000,A<6000) %>%
-#  nrow()
 ```
 We see that there is a handful of player that are far outside the norm. That is, some players have crazy high SS, S, A map counts. We filtered out map counts greater than 6000. This resulted in 33 players out of the histogram (<1% of population).
 The distribution of S and A maps follow a type of (skewed) normal distribution. SS maps follow a kind of exponential distribution. This last one is expected since SS maps are often difficult to achieve, and it's sometimes based on luck.  
@@ -98,9 +87,6 @@ Player %>%
   filter(SS<6000,S<6000,A<6000) %>%
   ggplot() +
   geom_bin2d(mapping = aes(x = performance, y = A))
-#  geom_point(mapping = aes(x = play_count, y = SS), color = "black", alpha = 1/10) +
-#  geom_point(mapping = aes(x = play_count, y = S), color = "blue", alpha = 1/10) +
-#  geom_point(mapping = aes(x = play_count, y = A), color = "green", alpha = 1/10)
 ```
 We investigat the correlation between map counts and performance a bit further. We can do this immediately with cor() function, but I prefer to go through every step of the process. We will see that his helps us get rid of outliers. This investigation will side track to modeling a performance. 
 
