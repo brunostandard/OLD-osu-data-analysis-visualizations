@@ -11,12 +11,13 @@ Requirements
 - R version 3.4.4 (2018-03-15), for R code and notebooks
 - Python 3.7.3, for python code and notebooks
 - Jupyter Notebook 4.4.0
-- (optional) conda 4.6.11 to use Jupyter Notebooks 
-This is a personal project.
+- (optional) conda 4.6.11 to use Jupyter Notebooks
  
 
 Description
 ----------------------------------------------------------------
+This is a personal project.
+
 This is an analysis of rank data from the site osu.ppy.sh. The are several parts to this analysis. I took the following steps:
 1. Copy data from osu.ppy.sh (by hand)
 2. Copy data from osu.pppy.sh (by hand) with the way back machine for older ranked data. 
