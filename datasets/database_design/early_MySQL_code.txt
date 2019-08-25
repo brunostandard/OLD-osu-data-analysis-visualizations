@@ -1,0 +1,120 @@
+CREATE TABLE Stats (
+	stats_id INTEGER NOT NULL,
+	rank INT, # was later added
+	accuracy FLOAT,
+	play_count INTEGER,
+	ss_count INTEGER,
+	s_count INTEGER,
+	a_count INTEGER,
+	PRIMARY KEY (stats_id)
+) ENGINE=InnoDB CHARACTER SET = utf8;
+
+CREATE TABLE Song (
+	song_id INTEGER NOT NULL AUTO_INCREMENT,
+	name VARCHAR(128),
+	PRIMARY KEY (song_id),
+	INDEX USING BTREE (name)
+) ENGINE=InnoDB CHARACTER SET = utf8;
+
+CREATE TABLE Player (
+	player_id INTEGER NOT NULL AUTO_INCREMENT,
+	stats_id INTEGER NOT NULL,
+	name VARCHAR(64),
+	PRIMARY KEY (player_id),
+	INDEX USING BTREE (name),
+	CONSTRAINT FOREIGN KEY (stats_id) REFERENCES Stats (stats_id)
+		ON DELETE CASCADE ON UPDATE CASCADE	
+) ENGINE=InnoDB CHARACTER SET = utf8;
+
+
+CREATE TABLE Manager (
+	player_id INTEGER NOT NULL,
+	song_id INTEGER NOT NULL,
+	performance INTEGER,
+	CONSTRAINT FOREIGN KEY (song_id) REFERENCES Song (song_id)
+		ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT FOREIGN KEY (player_id) REFERENCES Player (player_id)
+		ON DELETE CASCADE ON UPDATE CASCADE,
+	PRIMARY KEY (player_id, song_id)
+) ENGINE=InnoDB CHARACTER SET = utf8;
+
+
+# Prior, I wanted a player's id to be pre-determined based on rank. This idea would have 
+# made things harder. A player's rank may change at any point. 
+
+# I forgot that rank is a valuable information for players. (can be updated)
+ALTER TABLE Stats ADD COLUMN rank INTEGER AFTER stats_id;
+
+#ALTER TABLE Stats ADD UNIQUE rank (column_list)
+# I used above command to add a unique index data structure to rank column
+ALTER TABLE Stats ADD UNIQUE INDEX rank (rank)
+
+
+# upon implementing this uniqueness concept, I realized that a player's name should(!) be 
+# unique. 
+ALTER TABLE Player ADD UNIQUE(name);
+# Did you know that phpmyadmin can do this for you, including the mysql command. 
+
+
+# later wanted to have a performance (pp) into stats for data analysis. 
+ALTER TABLE Stats ADD COLUMN performance INTEGER AFTER rank;
+
+/*
+  I now realize that the above design was tricky to implement. I figure i'd lose performance if player and stats were in one table, but I think that is the best course of option for me. It's tricky to get everything sync properly b/c player to stats relation is one to one.
+*/ 
+
+CREATE TABLE Song (
+	song_id INTEGER NOT NULL AUTO_INCREMENT,
+	name VARCHAR(128),
+	PRIMARY KEY (song_id),
+	INDEX USING BTREE (name)
+) ENGINE=InnoDB CHARACTER SET = utf8;
+
+CREATE TABLE Player (
+	player_id INTEGER NOT NULL AUTO_INCREMENT,
+	name VARCHAR(64),
+    rank INTEGER, 
+    performance INTEGER,
+	accuracy FLOAT,
+	play_count INTEGER,
+	ss_count INTEGER,
+	s_count INTEGER,
+	a_count INTEGER,
+	PRIMARY KEY (player_id),
+	INDEX USING BTREE (name)
+) ENGINE=InnoDB CHARACTER SET = utf8;
+
+
+CREATE TABLE Manager (
+	player_id INTEGER NOT NULL,
+	song_id INTEGER NOT NULL,
+	performance INTEGER,
+	CONSTRAINT FOREIGN KEY (song_id) REFERENCES Song (song_id)
+		ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT FOREIGN KEY (player_id) REFERENCES Player (player_id)
+		ON DELETE CASCADE ON UPDATE CASCADE,
+	PRIMARY KEY (player_id, song_id)
+) ENGINE=InnoDB CHARACTER SET = utf8;
+
+# When I added 5000 players into this new database, It took less then 1 minute but more than 5 seconds. 
+
+# Archived Data for years 2016, 2017, and 2018
+
+CREATE TABLE Player20xx (
+	player_id INTEGER NOT NULL AUTO_INCREMENT,
+	name VARCHAR(64),
+    rank INTEGER, 
+    performance INTEGER,
+	accuracy FLOAT,
+	play_count INTEGER,
+	ss_count INTEGER,
+	s_count INTEGER,
+	a_count INTEGER,
+	PRIMARY KEY (player_id),
+	INDEX USING BTREE (name)
+) ENGINE=InnoDB CHARACTER SET = utf8;
+
+/*
+  Problem: Manager and Player need to be re-worked. Here is one reason why: Suppose I picked a song that is from 2018. There might be some players, in the top 100 performers of that song, that were active in 2018 but retired before mid-2019. Since they retired, they won't show up in the Player table (in the current design). This is a smalle but fixable issue. For example, these missing players might be seen in the Player2018 table. The information will definitely be skewed if the dates are off, but it's quick sloppy fix for a small problem. 
+  	We call it a small problem since I don't need a complete table of top 100 players for every song. As long as I choose more songs from late 2018 to now, I won't have a big issue. Suppose there 5 missing players for every other song, and say I have 100 songs. 250 missing data out of 1000 doesn't seem significant enough for me. 
+*/

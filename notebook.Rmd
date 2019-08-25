@@ -2,22 +2,21 @@
 title: "Osu Data Analysis and Visualizations"
 output: html_notebook
 ---
-
+<h2>Welcome.</h2>
+<p>Installing some basic libraries and datasets.</p>
 ```{r}
 library(readr)
-library(dplyr)
+library(dplyr) # ignore the warning
 library(tidyr)
 library(ggplot2)
-```
-```{r}
-
 Player <- read_csv("datasets/Player.csv",col_names = FALSE)
 lables <- c("player_id","name","rank","performance","accuracy","play_count","SS","S","A")
 colnames(Player) <- lables
 Player <- Player %>% select(performance,accuracy,play_count,SS,S,A)
 head(Player)
 ```
-We first begin with some basic visualizations of our data
+<h2>Basic Visualizations</h2>
+
 ```{r}
 # for some reason Player isn't sorted by performance yet. 
 Player <- Player %>% 
