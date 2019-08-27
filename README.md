@@ -21,15 +21,13 @@ This is a personal project.
 Osu! is a rythm-based game from [osu.ppy.sh](https://osu.ppy.sh/home). You play songs and click cricles. If you are really good at clickling circles, you can show up on the [leaderboard](https://osu.ppy.sh/rankings/osu/performance). What does it take to ascend to the top?
 
 This is an analysis of ranked data. The are several parts to this analysis. The following are the steps I took:
-1. Copy data from [osu.ppy.sh](https://osu.ppy.sh/rankings/osu/performance) (by hand)
-2. Copy data from osu.pppy.sh (by hand) with the way back machine for older ranked data. 
-3. Format the raw data with python
-	- Some visualizations is done here too.
-4. Use python to import the "formatted" data onto a local mysql database. 
+1. Copy data from [osu.ppy.sh](https://osu.ppy.sh/rankings/osu/performance) (now with webscraping)
+2. Copy data from osu.pppy.sh with the way back machine for older ranked data
+3. Use python to import the "formatted" data onto a local mysql database. 
 	- This part is for having a database to store data. 
 	- This is also a method for learning mysql and relational databases. 
 	- This will be expanded upon more. 
-5. Use R to produce more visualizations and describe a model. 
+4. Use R to produce more visualizations and describe a model. 
 	- Learned R in the process.
 
 
