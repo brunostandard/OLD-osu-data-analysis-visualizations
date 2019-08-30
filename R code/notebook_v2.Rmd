@@ -1,0 +1,131 @@
+---
+title: "Osu Data Analysis and Visualizations"
+output: html_notebook
+---
+## Introduction
+The following data analysis is about the online (FTP) rhythm-based game called [Osu!](osu.ppy.sh). In Osu!, we click circles. We click them to the rhythm of a song (or 'beat-map'). That pretty much sums up the game itself. What's interesting is that players can be ranked based on their overall performance. The best players have a higher overall performance (abbreviated as 'pp'), and we can see their names appear on the [Performance Rankings](https://osu.ppy.sh/rankings/osu/performance). I went and took the liberty of gathering as much data as I can from this list. See the folder 'Python Code' for more about how I gathered the data. 
+
+This notebook is what I've gathered from the data. Spoiler: It isn't much. But I have some cool visualizations. 
+
+## Coding
+We will mostly use packages from the tidyverse. 
+```{r}
+library(readr)
+library(dplyr) # ignore the warning
+library(tidyr)
+library(ggplot2)
+
+lables <- c("name","accuracy","PC","performance","SS","S","A")
+
+Player1 <- read_csv("../Python code/new_player_data_old.csv",col_names = lables) %>%
+  select(performance,PC,accuracy,SS,S,A) %>% # I don't need player names for this analysis. 
+  mutate(group = "old")
+
+lables2 <- c("name","performance","accuracy","PC","SS","S","A")
+
+Player2 <- read_csv("../Python code/new_player_data.csv",col_names = lables2) %>%
+  select(performance,PC,accuracy,SS,S,A) %>% # I don't need player names for this analysis. 
+  mutate(group = "new")
+
+Player <- rbind(Player1,Player2)
+```
+I have two datasets here. One dataset uses the most current information on the Performane Rankings. The other dataset are from past Performance Rankings, before late 2017. There are a handful of differences between the two datasets, so we'll cover that along our analysis. The tibble `Player` will contain both `new` and `old` values.
+
+There are a handful of outliers in the above datasets, so we are going to filter some values. This is hindsight of the column values having a skewed Gaussian (normal/bell-curve) distribution. 
+```{r}
+# helper function to help with repeated code
+is_in_range <- function(obj) {
+  between(obj,mean(obj)-4*sd(obj),mean(obj)+4*sd(obj))
+}
+
+filtered_data <- Player %>%
+  filter(
+    is_in_range(PC),
+    is_in_range(S),
+    is_in_range(A),
+    is_in_range(SS)
+  ) 
+
+#useful for some plotting
+filtered_data_means <-filtered_data %>%
+  group_by(group) %>%
+  summarise(mean_pf = mean(performance),
+            mean_pc = mean(PC),
+            mean_s = mean(S),
+            mean_a = mean(A),
+            mean_ss = mean(SS)) %>%
+  mutate(
+    group = ifelse(group == 'new','new mean','old mean')
+  )
+
+# mutating tibble filtered_data_means for the upcoming graph. For faceting purposes
+filtered_data_means_2 <- filtered_data_means %>%
+  gather(key = key, value = value, mean_s, mean_a) %>%
+  mutate(key = ifelse(key == "mean_s","S","A")) 
+```
+
+
+
+
+Let's start out with some basic line-graphs and histograms. We'll comapre the difference between the 'old' and the 'new' datasets. 
+```{r}
+ggplot(Player) +
+  geom_point(mapping = aes(x = 1:nrow(Player), y = performance, color = group))
+
+Player %>%
+  arrange(desc(performance)) %>%
+  ggplot(mapping = aes(x = 1:nrow(Player), y = performance, color = group)) +
+  geom_point()
+```
+We can clearly see how chopped up the data is in the first scatter plot. In particular, the `old` dataset is chopped up. A complete-ish dataset from the year, say, 2016 should look like the smooth line in the red. The chopped up look is based on what was made available to us with the [Wayback Machine](https://web.archive.org/web/*/osu.ppy.sh). 
+
+We can see how the conjoined datasets form a wonky exponential decay curve. 
+```{r}
+#basic histogram. (Good). We have the mean lines included to see the differences in old and new data. 
+ggplot(data = filtered_data) + 
+  geom_histogram(mapping = aes(x= performance, fill = group), bins = 100) +
+  geom_vline(data = filtered_data_means, mapping = aes(xintercept = mean_pf[1], color = 'new mean'), size = 1.25, linetype="twodash") +
+  geom_vline(data = filtered_data_means, mapping = aes(xintercept = mean_pf[2], color = 'old mean'), size = 1.25, linetype="twodash") +
+  scale_colour_manual('Lines',values = c("red","blue")) +
+  theme_bw()
+```
+We see that the average `performance` has increased in time. The difference being `1367` in value.
+
+```{r}
+#(Very good) Faceted differences between past and new data (S and A comparisons only)
+fac_histo <- filtered_data %>%
+  gather(key = key, value = value, -performance, -PC, -accuracy, -group, -SS) %>%
+  ggplot() +
+  geom_histogram(mapping = aes(x = value, fill = group), bins = 100) +
+  geom_vline(data = filtered_data_means_2, mapping = aes(xintercept = value, color = group), size = 1.25, linetype="twodash") +
+  scale_colour_manual('Lines',values = c("red","blue")) +
+  theme_bw()
+
+fac_histo + facet_grid(key ~ .)
+```
+This second figures is a little interesting. It seems that current players have more `A` ranked maps on average nowadays. However, past players held more `S` ranked maps than current players on average. There's also an interesting question about the ratio of `SS/S/A' ranked maps in proportion to `play_count` and `performance`. See the Discussion section.
+
+Now, let's look at some heat maps. 
+```{r}
+# (Okay enough for a plot). Interesting because faceted heat maps. 
+ggplot(filtered_data) +
+  geom_bin2d(aes(PC,performance)) +
+  scale_fill_gradient2(high = "darkblue") +I 
+  facet_grid(. ~ group) +
+  theme_bw()
+```
+
+
+```{r}
+# (Questionable). I think we already pointed out how S/A differs. 
+filtered_data %>%
+  gather(key = key, value = value, S, A) %>%
+  ggplot() +
+  geom_bin2d(aes(value,performance)) +
+  scale_fill_gradient2(high = "darkblue") +
+  facet_grid(key ~ group) +
+  theme_bw()
+```
+
+
+

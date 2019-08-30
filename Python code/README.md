@@ -12,3 +12,5 @@ This folder contains some files in regards to webscraping.
 What's amazing here is the result of this web-scraping. I've gathered 10,000 rows of data within minutes. It took close to an hour getting 5,000 rows of data, and that is not including filtering and formatting. 
 
 After applying some web-scraping techniques, I won't be posting the older pythong code. 
+
+Source for web-scraping: https://www.youtube.com/watch?v=XQgXKtPSzUI

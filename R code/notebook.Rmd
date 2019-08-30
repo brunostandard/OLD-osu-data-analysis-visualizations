@@ -9,9 +9,9 @@ library(readr)
 library(dplyr) # ignore the warning
 library(tidyr)
 library(ggplot2)
-lables <- c("player_id","name","rank","performance","accuracy","play_count","SS","S","A")
-Player <- read_csv("../datasets/Player.csv",col_names = lables) %>%
-  select(performance,play_count,accuracy,SS,S,A)
+lables <- c("name","performance","accuracy","play_count","SS","S","A")
+Player <- read_csv("../Python code/new_player_data.csv",col_names = lables) %>%
+  select(performance,play_count,accuracy,SS,S,A) # I don't need player names for this analysis. 
 head(Player)
 ```
 # Basic Visualizations
@@ -25,23 +25,23 @@ Player <- Player %>%
 ggplot(data = Player) +
   geom_point(mapping = aes(x= id, y=performance))
 ```
-We see that performance as a function of id (rank) follows a kind of exponential decay.
+We see that `performance` as a function of id (rank) follows a kind of exponential decay.
 
 ```{r}
 ggplot(data = Player) + 
-  geom_histogram(mapping = aes(x = play_count),bins = 80)
+  geom_histogram(mapping = aes(x = play_count),bins = 100)
 ```
 ```{r}
 ggplot(data = Player) +
-  geom_point(mapping = aes(x = id, y = play_count), alpha = 1/5)
+  geom_point(mapping = aes(x = id, y = play_count), alpha = 1/10)
 ```
-We can almost see an average increase in play_count as id (rank) approaches 1. The next plot confirms this.
+We can almost see an average increase in `play_count` as `id` (rank) approaches 1. The next plot confirms this.
 ```{r}
 Player %>%
-  ggplot(mapping = aes(x = id, y = play_count, group = cut_width(id,500))) +
+  ggplot(mapping = aes(x = id, y = play_count, group = cut_width(id,750))) +
   geom_boxplot()
 ```
-We see that play_count has some relation to one's performance to their play_count. That is, the median play_count increases as one's id (rank) increases. The distribution is of play_counts is like a skewed normal with mean about 78429. I do expect one's id to correlate with their play_count. 
+We see that `play_count` has some relation to one's `performance` to their `play_count`. That is, the median `play_count` increases as one's id (rank) increases. The distribution is of `play_count`s is like a skewed normal with mean about `78429`. I do expect one's id to correlate with their `play_count`. 
 
 There are some reasons for that noise. Consider the following:
 
@@ -50,7 +50,7 @@ There are some reasons for that noise. Consider the following:
 3.  Players could have multiple accounts and or changed accounts. 
 4.  Players may not often play for rankings (or "pp farming")
  
-There is something else to consider besides overall play_counts: "beat-map" plays. That is, performance is also based on the number of SS, S, and A rated beat-maps. In Osu!, the main sources of performance are SS and S maps (and occasionally A maps). A player's *overall* performance is based on their top 100 maps (usually the most difficult completed beat-maps). An algorithm determines the exact performance one gets from a single map, and it takes things like accuracy, mods, and score into account. This data only has information about a player's overall performance. 
+There is something else to consider besides overall `play_count`s: "beat-map" plays. That is, `performance` is also based on the number of `SS`, `S`, and `A` rated beat-maps. In Osu!, the main sources of `performance` are `SS` and `S` maps (and occasionally `A` maps). A player's *overall* `performance` is based on their top 100 maps (usually the most difficult completed beat-maps). An algorithm determines the exact `performance` one gets from a single map, and it takes things like `accuracy`, mods, and score into account. This data only has information about a player's overall `performance`. 
 ```{r} 
 Player %>% 
   gather(key = key, value = value, -id, -performance, -play_count, -accuracy) %>%
@@ -60,9 +60,9 @@ Player %>%
 ```
 We filtered out map counts greater than 6000. This resulted in 33 players out of the histogram (<1% of population).
 
-The distribution of S and A maps follow a type of (skewed) normal distribution. SS maps follow a kind of exponential distribution. This is expected since SS maps are often difficult to achieve, and it's sometimes based on luck.  
+The distribution of `S` and `A` maps follow a type of (skewed) normal distribution. `SS` maps follow a kind of exponential distribution. This is expected since `SS` maps are often difficult to achieve, and it's sometimes based on luck.  
 
-The following are the 2d histograms of SS/A/S maps and performance
+The following are the 2d histograms of `SS/A/S` maps and `performance`
 ```{r}
 Player %>%
   filter(SS<6000,S<6000,A<6000) %>%
@@ -79,10 +79,10 @@ Player %>%
   ggplot() +
   geom_bin2d(mapping = aes(x = performance, y = A))
 ```
-We investigate the correlation between SS/S/A counts and performance a bit further. We can use the cor() function, but I prefer to go through every step of the process. Doing this will help us deal with outliers. This investigation will side track to modeling a performance. 
+We investigate the correlation between `SS/S/A` counts and `performance` a bit further. We can use the `cor()` function, but I prefer to go through every step of the process. Doing this will help us deal with outliers. This investigation will side track to modeling a `performance`. 
 
 ```{r}
-centered_player <- Player %>%
+centered_data <- Player %>%
   mutate(
     play_count = (play_count-mean(play_count))/sqrt(var(play_count)),
     S = (S-mean(S))/sqrt(var(S)), # centering,
@@ -91,22 +91,22 @@ centered_player <- Player %>%
     accuracy = (accuracy - mean(accuracy))/sd(accuracy),
     performance = (performance - mean(performance))/sd(performance)
   ) %>%
-  select(-id) # not accepting id
+  select(performance,play_count,S,SS,A,accuracy) # not accepting id
 ```
 Now we can take a better look at the outliers with boxplots:
 ```{r}
-centered_player %>%
+centered_data %>%
   gather(key = key, value = value) %>%
   ggplot(aes(x = key, y = value)) +
   geom_boxplot()
 ```
 
-Osu players are clearly not afraid to stand-out. Over-the-top play_counts are great, but we will consider them to be outliers. We chose a value x to be an outlier if it is not in (mean(x)-std*4.75,mean(x)+std*4.75) to be outliers. This weak requirement alone rids of 106 players (~2% of population). 
+Osu players are clearly not afraid to stand-out. Over-the-top `play_count`s are great, but we will consider them to be outliers. We chose a value `x` to be an outlier if it is not in `(mean(x)-std*4,mean(x)+std*4)` to be outliers. This weak requirement alone rids of 295 players (3% of population). 
 
 ```{r}
 # function to help with repeated code
 is_in_range <- function(obj) {
-  between(obj,mean(obj)-4.75*sd(obj),mean(obj)+4.75*sd(obj))
+  between(obj,mean(obj)-4*sd(obj),mean(obj)+4*sd(obj))
 }
 
 #now filtering non-centered data
@@ -118,7 +118,6 @@ filtered_data <- Player %>%
     is_in_range(performance),
     is_in_range(accuracy)
   ) 
-
 #now centering that filtered data (a bit redundant yes)
 centered_filtered_data <- filtered_data %>%
   mutate(
@@ -130,65 +129,75 @@ centered_filtered_data <- filtered_data %>%
     performance = (performance - mean(performance))/sd(performance)
   ) %>%
   select(performance,play_count,S,SS,A,accuracy)
+#count(centered_filtered_data)
 ```
-Now we want to look at the correlation matrix of the centered_filtered_data tibble.
+Now we want to look at the correlation matrix of `centered_filtered_data` tibble followed by (un-filtered) `centered_data` tibble.
 ```{r}
-prf_vec <- centered_filtered_data$performance
-acc_vec <- centered_filtered_data$accuracy
-s_vec  <- centered_filtered_data$S
-ss_vec <- centered_filtered_data$SS
-a_vec <- centered_filtered_data$A
-pc_vec <- centered_filtered_data$play_count
+cor_matrix_CFD <- cor(centered_filtered_data)
+print("cor(centered_filtered_data) ====================")
+print(round(cor_matrix_CFD,2))
+cor_matrix_CD <- cor(centered_data)
+#print(round(cor_matrix_CD,2))
+cor_matrix_diff <- cor_matrix_CFD - cor_matrix_CD
+print("cor(centered_filtered_data) - cor(centered_data)")
+print(round(cor_matrix_diff,2))
+```
+We can see that there is a slight difference between the two values. The greatest difference is the `cor()` of `SS` and `accuracy`, but we only care about `cor()`'s involving `performance`. In regards to the variable `performance`, the variable `S` would have had a lesser correlation with `performance`. I would say that fact is in the right direction. 
 
-M <- cbind(prf_vec,pc_vec,acc_vec,ss_vec,s_vec,a_vec)
-CM <- cor(M)
-CM[1,] # in particular, we want to look at how each variable correlates to performance. 
-```
-In Osu!, overall accuracy has little influence in the high ranks of the game. It matters a great deal between beat-maps, but there accuracy isn't the strongest factor in the game. A correlation of -0.067 between performance and accuracy somewhat validates this suspician. To further back this argument, we briefly investigate overall accuracy. 
-```{r}
-Player %>%
-  ggplot(mapping = aes(x = id, y = accuracy, group = cut_width(id,500))) +
-  geom_boxplot() 
-Player %>%
-  filter(between(accuracy,95,100)) %>% # for outliers
-  ggplot(mapping = aes(x = accuracy)) +
-  geom_freqpoly(bins = 50) 
-  
-```
+The `cor()` of `performance` and `play_count` is the highest with `0.39`. This is followed by `cor()` of `performance` and `S` with `0.20`. Unsurprisingly though, the `cor()` of `performance` and `accuracy` has the lowest correlation, a value of `-0.06`. I never expected one's overall accuracy to be relevant in their performance. 'accuracy' might have a greater impact in the ranks below 50,000, though. 
+
+In Osu!, overall `accuracy` has little influence in the high ranks of the game. 
+
+- Higher `accuracy` will give someone more performance, though. 
 
 With information about correlation, we'll generate some plots. 
 
 ```{r}
-# 1st experimental correlation in regards to performance, q = 0.34083772
+# 1st experimental correlation in regards to performance, q = 0.39
 ggplot(centered_filtered_data) +
-  geom_point(aes(x = play_count, y = performance),alpha = 1/20) +
-  geom_abline(slope = CM['pc_vec','prf_vec'],color = "red") +
-  geom_abline() # for reference
+  geom_point(aes(x = `play_count`, y = performance),alpha = 1/15) +
+  geom_abline(slope = cor_matrix_CFD['play_count','performance'],color = "red")
 
-# 2nd experimental correlation in regards to performance, q = 0.14758904
+# 2nd experimental correlation in regards to performance, q = 0.20
 ggplot(centered_filtered_data) +
-  geom_point(aes(x = S, y = performance),alpha = 1/20) +
-  geom_abline(slope = CM['s_vec','prf_vec'],color = "red")
+  geom_point(aes(x = S, y = performance),alpha = 1/15) +
+  geom_abline(slope = cor_matrix_CFD['S','performance'],color = "red")
 
-# last experimental correlation in regards to performance, q = -0.06737515
+# last experimental correlation in regards to performance, q = -0.06
 ggplot(centered_filtered_data) +
-  geom_point(aes(x = accuracy, y = performance),alpha = 1/20) +
-  geom_abline(slope = CM['acc_vec','prf_vec'],color = "red") 
+  geom_point(aes(x = accuracy, y = performance),alpha = 1/15) +
+  geom_abline(slope = cor_matrix_CFD['accuracy','performance'],color = "red") 
 
 ```
 
-This is interesting observation. play_count seems to be the strongest variable in someone's performance. Intuitively, this makes a lot of sense. One plays more and gets slightly better every time they play. A correlation of 0.34 isn't too impressive, but there several things to consider. Not each player plays with the intent of practicing. Everyone wants to improve and play harder songs (beat-maps), yet they do it casually. That is to be expected. We play to have fun. 
+This is interesting observation. `play_count` seems to be the strongest variable in someone's `performance`. Intuitively, this makes a lot of sense. One plays more and gets slightly better every time they play. A correlation of `0.34` isn't too impressive, but there several things to consider. Not each player plays with the intent of practicing. Everyone wants to improve and play harder songs (beat-maps), yet they do it casually. That is to be expected. We play to have fun. 
 
-Now consider constructing a linear model that can help us better determine one's performance given they are in the top 5000. 
+Now consider constructing a linear model that can help us better determine one's `performance` given they are in the top 5000. 
+
 # Linear Models
-Ultimately, we want to use all of the variables to model performance, but we begin with modeling performance with play_count.
-```{r}
-model1 <- lm(play_count ~ performance, data = Player) # basic linear model
 
-ggplot(data = Player) +
-  geom_point(mapping = aes(x = performance, y = play_count), alpha = 1/10) +
-  geom_abline(slope = 0,intercept = mean(Player$play_count), color = "red") +
-  geom_abline(slope = model1$coefficients[2], intercept = -model1$coefficients[1], color = "blue")
+Ultimately, we want to use all of the variables to model `performance`, but we begin with modeling `performance` with `play_count`.
+```{r}
+model1 <- lm(log(play_count) ~ id, data = Player) # basic linear model
+model2 <- lm(play_count ~ id, data = Player)
+a <- model1$coefficients[2]
+b <- model1$coefficients[1]
+summary(model1)
+
+f <- function(id,a,b) {
+  a*id + b
+}
+quick_tibble <- tibble(
+  id = Player$id, 
+  play_count = exp(f(Player$id,a,b))
+)
+
+ggplot() +
+  geom_point(data = Player, mapping = aes(x = id, y = play_count), alpha = 1/10) +
+  geom_abline(slope = 0,intercept = mean(Player$play_count), color = "red", size = 2) +
+  geom_line(data = quick_tibble, mapping = aes(x = id, y = play_count), color = "yellow", size = 2) +
+  geom_abline(slope = model2$coefficients[2], intercept = model2$coefficients[1], color = "green", size = 2)
+
 ```
 
 Experimental Stuff:
@@ -207,7 +216,7 @@ model$coefficients
 #  geom_abline(slope = model1$coefficients[2], intercept = -model1$coefficients[1], color = "blue")
 ```
 
-Confirming some supsicians about lm() function.
+Confirming some supsicians about `lm()` function.
 ```{r}
 df <- tibble(
   x = 1:20,
