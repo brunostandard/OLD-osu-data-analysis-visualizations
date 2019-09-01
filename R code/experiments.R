@@ -6,13 +6,13 @@ library(ggplot2)
 lables <- c("name","accuracy","PC","performance","SS","S","A")
 
 Player1 <- read_csv("../Python code/new_player_data_old.csv",col_names = lables) %>%
-  select(performance,PC,accuracy,SS,S,A) %>% # I don't need player names for this analysis. 
+  #select(performance,PC,accuracy,SS,S,A) %>% # I don't need player names for this analysis. 
   mutate(group = "old")
 
 lables2 <- c("name","performance","accuracy","PC","SS","S","A")
 
 Player2 <- read_csv("../Python code/new_player_data.csv",col_names = lables2) %>%
-  select(performance,PC,accuracy,SS,S,A) %>% # I don't need player names for this analysis. 
+  #select(performance,PC,accuracy,SS,S,A) %>% # I don't need player names for this analysis. 
   mutate(group = "new")
 
 Player <- rbind(Player1,Player2)
@@ -201,3 +201,144 @@ facet_point <- Player %>%
 # Now we facet the scatter plot (contained in variable facet_points). 
 facet_point + facet_grid(key ~ .) +
   scale_colour_manual("Dots", values = c("blue","black"))
+
+
+# Trying something different. =============
+
+
+
+temp_model <- lm(log(performance) ~ log(1/(id+1)) , temp_data)
+temp_model$coefficients
+a <- temp_model$coefficients[2]
+b <- temp_model$coefficients[1]
+
+
+temp_data %>%
+  mutate(
+    lm_performance =  exp(a*log(1/(id+1))+b)
+  ) %>%
+  ggplot() +
+  geom_point(aes(id,performance), color = "blue") +
+  geom_point(aes(id,lm_performance, color = "Model")) +
+  scale_color_manual(name=c("Line"), values = ("red"))
+
+temp_data_2 <- slice(Player1) %>%
+  select(performance) %>%
+  slice((nrow(Player1)-10000+1):nrow(Player1)) %>%
+  mutate(
+    id = 1:nrow(temp_data_2)
+  )
+
+
+temp_model_2 <- lm(log(performance) ~ log(1/(id+1)) , temp_data_2)
+temp_model_2$coefficients
+a_2 <- temp_model_2$coefficients[2]
+b_2 <- temp_model_2$coefficients[1]
+
+ggplot(temp_data_2) +
+  geom_point(aes(id,performance),color = "blue")
+
+temp_data_2 %>%
+  mutate(
+    lm_performance =  exp(a*log(1/(id+1))+b-2/10),
+    lm_2_performance = exp(a_2*log(1/(id+1))+b_2)
+  ) %>%
+  ggplot() +
+  geom_line(aes(id,performance, color = "Actual"), size = 1) +
+  geom_line(data = temp_data, mapping = aes(id, performance-2920, color = "Actual new")) +
+  #geom_line(aes(id,lm_performance, color = "Model"), size = 0.8) +
+  #geom_line(aes(id,lm_2_performance, color = "Model2"), size = 0.8) +
+  scale_color_manual(name=c("Lines"), values = c("red","green"))
+
+
+temp_data_3 <- Player1 %>%
+  select(performance) %>%
+  slice(1900:(nrow(Player1)-10000)) %>%
+  mutate(
+    id = 1:951
+  ) 
+
+temp_model_3 <- lm(log(performance) ~ log(1/(id+1)) , temp_data_3)
+temp_model_3$coefficients
+a_3 <- temp_model_3$coefficients[2]
+b_3 <- temp_model_3$coefficients[1]
+
+super_a <- (a+a_2)/2
+
+temp_data_3 %>%
+  mutate(
+    lm_performance = exp(a_3*log(1/(id+1))+b_3),
+    lm_performance_2 = exp(super_a*log(1/(id+1))+b_3)
+  ) %>%
+  ggplot() + 
+  geom_line(aes(id, performance), color = "blue") +
+  geom_line(aes(id, lm_performance), color = "green") + 
+  geom_line(aes(id, lm_performance_2), color = "red")
+
+
+# What am I doing: modeling the exponential decay of performance ranking. 
+# Why? I wanted to see how the rankings change over time. We observed that the performance cieling
+# increases somewhat linearly by year. 
+# After a little analysis, it seems like the older performance rankings were more even. We don't
+# see the drastic difference in performances of the top 200s of today. 
+summary_of_models <- tibble(
+  id = 1:10000,
+  lm_performance_new = exp(a*log(1/(id+1))+b),
+  lm_performance_old = exp(a_2*log(1/(id+1))+b),
+  lm_performance_older = exp(a_3*log(1/(id+1))+b),
+  lm_performance_average = exp(super_a*log(1/(id+1))+b)
+) 
+summary_of_models %>%
+  gather(key = key, value = value, -id) %>%
+  ggplot() +
+  geom_line(aes(id, value, color = key), size = 1.5) 
+
+
+# what' good is that we have a model for top100 performances over time (date)
+# Fist and foremost, we bring the data. 
+top_labels <- c('name', 'performance','accuracy','PC','SS','S','A','date')
+topPlayer <- read_csv("../Python code/test.csv",col_names = FALSE) 
+colnames(topPlayer) <- top_labels
+
+sorted_top_player <- topPlayer %>%
+  select(performance, date) %>%
+  arrange(date) %>%
+  mutate(
+    id = 1:800
+  )
+
+ggplot(sorted_top_player) +
+  geom_point(aes(date,performance))
+
+model <- lm(performance ~ date,sorted_top_player)
+a <- model$coefficients[2]
+b <- model$coefficients[1]
+
+# (VERY GOOD)
+sorted_top_player %>%
+  mutate(
+    lm_performance = as.numeric(date)*a + b
+  ) %>%
+  ggplot() +
+  geom_point(aes(date,performance)) + 
+  geom_line(aes(date,lm_performance, color = "linear model"), size = 2) +
+  scale_color_manual(name = c("Line"), values = c("red"))
+
+# now that we have this model, we can take a guess as to what the performances of 2020 and
+# 2025 will be. We could probably do the same thing with PCs of the top 100s, but we 
+# look into it when we consider take a look how PC,SS,S,A changes over time, The main drive in all of this
+# is to see if players are getting better or performance inflation plays is to blame. I have little doubt
+# in my mind that players are getting better as time goes by. We can even go into case studies and observer
+# veterans. The classic examples are Cookiezi (now chocominto) and WubWolfWolf. There aren't too many veterans
+# actively playing for rank, but I'm sure we can get something out of it. 
+
+# now that we a model for performance as a function of time (date), we can use it in conjuction with our
+# other model: performance as a function of rank. 
+
+# What I wanted is some correction term. In the notebooks, I got to a point where I couldn't get anywhere
+# with the models. I had two models for performance, a function of the variables. One model is for the "new"
+# dataset. The other model is for the "older" dataset. I didn't like this because of the differences. I 
+# wanted maybe a correction term that can recalibrate performance to account for "inflation". I'll need proof 
+# of this inflation with some case studies though. I assume there is a performance inflation to account for. 
+
+# We might need to move forward

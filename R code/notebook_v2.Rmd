@@ -15,17 +15,17 @@ library(dplyr) # ignore the warning
 library(tidyr)
 library(ggplot2)
 
-lables <- c("name","accuracy","PC","performance","SS","S","A")
+lables <- c("name","performance","accuracy","PC","SS","S","A","Date")
 
-Player1 <- read_csv("../Python code/new_player_data_old.csv",col_names = lables) %>%
-  select(performance,PC,accuracy,SS,S,A) %>% # I don't need player names for this analysis. 
-  mutate(group = "old")
+Player1 <- read_csv("../Python code/test2.csv",col_names = lables) %>%
+  select(performance,PC,SS,S,A,Date) %>%
+  filter(Date>as.Date("2016-01-01")) %>%    # useless data imo
+  filter(!(between(Date,as.Date("2017-08-01"),as.Date("2017-12-31")))) %>% # just filtering dirty data
+  mutate(group = 'old')
 
-lables2 <- c("name","performance","accuracy","PC","SS","S","A")
-
-Player2 <- read_csv("../Python code/new_player_data.csv",col_names = lables2) %>%
-  select(performance,PC,accuracy,SS,S,A) %>% # I don't need player names for this analysis. 
-  mutate(group = "new")
+Player2 <- read_csv("../Python code/test3.csv",col_names = lables) %>%
+  select(performance,PC,SS,S,A,Date) %>%
+  mutate(group = 'new')
 
 Player <- rbind(Player1,Player2)
 ```
@@ -70,7 +70,10 @@ filtered_data_means_2 <- filtered_data_means %>%
 Let's start out with some basic line-graphs and histograms. We'll comapre the difference between the 'old' and the 'new' datasets. 
 ```{r}
 ggplot(Player) +
-  geom_point(mapping = aes(x = 1:nrow(Player), y = performance, color = group))
+  geom_point(mapping = aes(x = Date, y = performance, color = group))
+
+ggplot(Player) +
+  geom_point(aes(1:nrow(Player),performance,color = Date))
 
 Player %>%
   arrange(desc(performance)) %>%
@@ -83,9 +86,9 @@ We can see how the conjoined datasets form a wonky exponential decay curve.
 ```{r}
 #basic histogram. (Good). We have the mean lines included to see the differences in old and new data. 
 ggplot(data = filtered_data) + 
-  geom_histogram(mapping = aes(x= performance, fill = group), bins = 100) +
-  geom_vline(data = filtered_data_means, mapping = aes(xintercept = mean_pf[1], color = 'new mean'), size = 1.25, linetype="twodash") +
-  geom_vline(data = filtered_data_means, mapping = aes(xintercept = mean_pf[2], color = 'old mean'), size = 1.25, linetype="twodash") +
+  geom_histogram(mapping = aes(x= PC, fill = group), bins = 100) +
+  geom_vline(data = filtered_data_means, mapping = aes(xintercept = mean_pc[1], color = 'new mean'), size = 1.25, linetype="twodash") +
+  geom_vline(data = filtered_data_means, mapping = aes(xintercept = mean_pc[2], color = 'old mean'), size = 1.25, linetype="twodash") +
   scale_colour_manual('Lines',values = c("red","blue")) +
   theme_bw()
 ```
@@ -94,7 +97,7 @@ We see that the average `performance` has increased in time. The difference bein
 ```{r}
 #(Very good) Faceted differences between past and new data (S and A comparisons only)
 fac_histo <- filtered_data %>%
-  gather(key = key, value = value, -performance, -PC, -accuracy, -group, -SS) %>%
+  gather(key = key, value = value, -performance, -PC, -Date, -group, -SS) %>%
   ggplot() +
   geom_histogram(mapping = aes(x = value, fill = group), bins = 100) +
   geom_vline(data = filtered_data_means_2, mapping = aes(xintercept = value, color = group), size = 1.25, linetype="twodash") +
@@ -110,8 +113,8 @@ Now, let's look at some heat maps.
 # (Okay enough for a plot). Interesting because faceted heat maps. 
 ggplot(filtered_data) +
   geom_bin2d(aes(PC,performance)) +
-  scale_fill_gradient2(high = "darkblue") +I 
-  facet_grid(. ~ group) +
+  scale_fill_gradient2(high = "darkblue") +
+#  facet_grid(. ~ group) +  # faceting doesn't look good though
   theme_bw()
 ```
 
@@ -121,11 +124,159 @@ ggplot(filtered_data) +
 filtered_data %>%
   gather(key = key, value = value, S, A) %>%
   ggplot() +
-  geom_bin2d(aes(value,performance)) +
+  geom_bin2d(aes(value,PC)) +
   scale_fill_gradient2(high = "darkblue") +
-  facet_grid(key ~ group) +
+  facet_grid(. ~ key) +
   theme_bw()
 ```
+Now we'll take a closer look at performance. One thing gives us some trouble though. I am making the assumption that performance inflates over time (linearly), so it wouldn't be ideal to compare performaces at separate years. 
 
+Consider the graph below of the top 50 players at separate points in time. 
 
+```{r}
+top_labels <- c('name', 'performance','accuracy','PC','SS','S','A','Date')
+topPlayer <- read_csv("../Python code/test.csv",col_names = FALSE) 
+colnames(topPlayer) <- top_labels
 
+sorted_top_player <- topPlayer %>%
+  select(performance, PC,SS,S,A, Date) %>%
+  arrange(Date) %>%
+  mutate(
+    id = 1:800
+  )
+
+ggplot(sorted_top_player) +
+  geom_point(aes(Date,performance,color = Date)) +
+  theme_bw()
+```
+Now let's look at `PC` (play_count) of the top 50 players over time. 
+```{r}
+ggplot(sorted_top_player) +
+  geom_point(aes(Date,PC,color = Date)) + 
+  theme_bw()
+```
+And a quick overview of the distribution of `SS`/`S`/`A` over time
+```{r}
+sorted_top_player %>%
+  gather(key=key,value=value,SS,S,A) %>%
+  ggplot() +
+    geom_point(aes(Date,value, color = Date)) +
+    facet_grid(. ~ key) +
+    theme_bw()
+```
+Okay, there are a handful of outliers, but there is no linear growth in `PC` (play count) or `SS`/`S`/`A` like we do with performance. This argument could be stronger if we had say top 500 data at separate points in time. This is a limitation of the WayBack Machine having enough archived urls. 
+
+Let's make a linear model of performance as a function of time. 
+```{r}
+model <- lm(performance ~ Date,sorted_top_player)
+c <- model$coefficients[2]
+d <- model$coefficients[1]
+
+# (VERY GOOD)
+sorted_top_player %>%
+  mutate(
+    lm_performance = as.numeric(Date)*c + d
+  ) %>%
+  ggplot() +
+  geom_point(aes(Date,performance)) + 
+  geom_line(aes(Date,lm_performance, color = "linear model"), size = 2) +
+  scale_color_manual(name = c("Line"), values = c("red")) +
+  theme_bw()
+```
+This is a rough linear model, but it gives us some idea how performance 'inflates' over time. 
+
+We can now give a type of correctional term to the 'old' player data, but we'll breifly study how performance can be modeled as a function of rank. First, let's partition the data into categories. 
+```{r}
+oldest_data <- filtered_data %>%
+  filter(between(Date,as.Date("2016-01-01"),as.Date("2017-01-01"))) %>%
+  arrange(desc(performance)) %>%
+  mutate(
+    id = 1:n()
+  )
+
+older_data <- filtered_data %>%
+  filter(between(Date,as.Date("2017-01-01"),as.Date("2018-01-01"))) %>%
+  arrange(desc(performance)) %>%
+  mutate(
+    id = 1:n()
+  )
+  
+current_data <- filtered_data %>%
+  filter(between(Date,as.Date("2019-01-01"),as.Date("2020-01-01"))) %>%
+  arrange(desc(performance)) %>%
+  mutate(
+    id = 1:n()
+  )
+```
+
+Now for some quick modeling. Note, after some observation, the log of performance can be modeled as the log of one over the Date. `log(performance) ~ log(1/(id+1))`
+
+- This discovery was based on a simple obervation: It looked like performance could be modeled as an exponential decay term. After I took the log of performance, I expected to see a linear term since `log(exp(-x)) == -x`. This is not what i found. The `log(performance)` looked like it was exponentially decaying still. Even `log(log(performance))` still had a exponential decay look to it. I later realized that taking the log of `1/x` had an exponential decay look to it. So I used `log(performance) ~ log(1/x)`. This logs at this point are only for reducing the size of the values (keeping things less than 10).
+```{r}
+temp_model <- lm(log(performance) ~ log(1/(id+1)) , oldest_data)
+temp_model$coefficients
+a <- temp_model$coefficients[2] # coefficient
+b <- temp_model$coefficients['(Intercept)']
+
+temp_model_2 <- lm(log(performance) ~ log(1/(id+1)) , older_data)
+temp_model_2$coefficients
+a_2 <- temp_model_2$coefficients[2] # coefficient
+b_2 <- temp_model_2$coefficients['(Intercept)']
+
+temp_model_3 <- lm(log(performance) ~ log(1/(id+1)) , current_data)
+temp_model_3$coefficients
+a_3 <- temp_model_3$coefficients[2] # coefficient
+b_3 <- temp_model_3coefficients['(Intercept)']
+```
+The differences in the intercepts will matter a lot here.
+
+sd
+```{r}
+oldest_data %>%
+  mutate(
+    lm_performance = exp(a*log(1/(id+1)) + b)
+  ) %>%
+  ggplot() +
+  geom_line(aes(id,performance, color = "Actual"), size = 1.5) +
+  geom_line(aes(id,lm_performance, color = "Model"), size = 1.5) +
+  scale_color_manual(name = c("Lines"), values = c("blue", "red")) +
+  theme_bw()
+
+older_data %>%
+  mutate(
+    lm_performance = exp(a_2*log(1/(id+2)) + b_2) # just shifting a bit so it can start the same
+  ) %>%
+  ggplot() +
+  geom_line(aes(id,performance, color = "Actual"), size = 1.5) +
+  geom_line(aes(id,lm_performance, color = "Model"), size = 1.5) +
+  scale_color_manual(name = c("Lines"), values = c("blue", "red")) +
+  theme_bw()
+
+current_data %>%
+  mutate(
+    lm_performance = exp(a_3*log(1/(id+20)) + b_3) # just shifting a bit so it can start the same
+  ) %>%
+  ggplot() +
+  geom_line(aes(id,performance, color = "Actual"), size = 1.5) +
+  geom_line(aes(id,lm_performance, color = "Model"), size = 1.5) +
+  scale_color_manual(name = c("Lines"), values = c("blue", "red")) +
+  theme_bw()
+```
+Notice how that the curvs are not alike. The older data is a bit smoother as it dips down, and the current data has a steep drop before it mellows out. A summary of the models:
+
+```{r}
+summary_of_models <- tibble(
+  id = 1:5000,
+  lm_performance_current = exp(a_3*log(1/(id+20)) + b_3),
+  lm_performance_older = exp(a_2*log(1/(id+2))+b_2),
+  lm_performance_oldest = exp(a*log(1/(id+1))+b)
+) 
+summary_of_models %>%
+  gather(key = key, value = value, -id) %>%
+  ggplot() +
+  geom_line(aes(id, value, color = key), size = 1.5) +
+  theme_bw()
+```
+So the start will  be different, but the coefficient terms seem to matter the most. So we'll take the average of `a_2` and `a_3`. 
+
+With this general model at our disposal, all we need is the starting value, `performance(ip = 0)`, to have a rough model 

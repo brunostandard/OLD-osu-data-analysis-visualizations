@@ -1,4 +1,4 @@
-bank = ["https://web.archive.org/web/20140913100502/http://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=1",
+mega_bank_with_old_format = ["https://web.archive.org/web/20140913100502/http://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=1",
 "https://web.archive.org/web/20140821201411/https://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
 "https://web.archive.org/web/20140726202412/https://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=3",
 "https://web.archive.org/web/20140727003253/https://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=4",
@@ -255,3 +255,38 @@ bank = ["https://web.archive.org/web/20140913100502/http://osu.ppy.sh/p/pp/?m=0&
 "https://web.archive.org/web/20171211013745/https://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=197",
 "https://web.archive.org/web/20171211013744/https://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=198",
 "https://web.archive.org/web/20171211013746/https://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=199"]
+
+
+trash = ["https://web.archive.org/web/20140708183556/http://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
+"https://web.archive.org/web/20140821201411/https://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
+"https://web.archive.org/web/20150210041028/http://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
+"https://web.archive.org/web/20150423192726/http://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
+"https://web.archive.org/web/20151020125642/http://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
+"https://web.archive.org/web/20151217200815/https://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
+"https://web.archive.org/web/20160302104703/http://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
+"https://web.archive.org/web/20160817144224/http://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
+"https://web.archive.org/web/20161203140123/https://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
+"https://web.archive.org/web/20170701035026/https://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2",
+"https://web.archive.org/web/20171007150309/http://osu.ppy.sh/p/pp/?m=0&s=3&o=1&f=&page=2"]
+
+
+top_rank_bank_with_old_format = [
+"https://web.archive.org/web/20140821192039/https://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20140823121928/https://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20141203185159/https://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20150411194521/https://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20150915015147/http://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20160101024536/https://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20160601115418/https://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20161214234822/https://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20170616061319/http://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20171002030409/http://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20171230172458/https://osu.ppy.sh/p/pp",
+"https://web.archive.org/web/20180317010309/https://osu.ppy.sh/p/pp"
+]
+top_rank_bank_with_new_format = [
+"https://web.archive.org/web/20171115214323/https://osu.ppy.sh/rankings/osu/performance?page=1",
+"https://web.archive.org/web/20181019001222/https://osu.ppy.sh/rankings/osu/performance?page=1",
+"https://web.archive.org/web/20190131203937/https://osu.ppy.sh/rankings/osu/performance?page=1",
+"https://web.archive.org/web/20190331232211/https://osu.ppy.sh/rankings/osu/performance?page=1",
+]

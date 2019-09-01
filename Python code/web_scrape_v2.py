@@ -13,11 +13,7 @@ def scrape_v2(my_url):
 		the earlier version of osu.ppy.sh before late 2018.
 	"""
 	req = Request(my_url, headers={'User-Agent': 'Mozilla/5.0'})
-	try:
-		uClient = uReq(req)
-	except:
-		uClient.close()
-		return []
+	uClient = uReq(req)
 	page_html = uClient.read()
 	page_html = page_html.decode('utf-8')
 	uClient.close()
@@ -56,7 +52,7 @@ def scrape_v2(my_url):
 
 		performance = temp[4].replace("\n","").replace("pp","").replace(",","")
 
-		final_row = [name, acc, play_count, performance]
+		final_row = [name, performance, acc, play_count]
 
 		# Now just putting everything together. 
 		final_row.extend(map_count)
