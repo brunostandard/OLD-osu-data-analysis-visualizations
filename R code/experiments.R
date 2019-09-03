@@ -341,4 +341,9 @@ sorted_top_player %>%
 # wanted maybe a correction term that can recalibrate performance to account for "inflation". I'll need proof 
 # of this inflation with some case studies though. I assume there is a performance inflation to account for. 
 
+
+ggplot(sorted_top_player) +
+  geom_point(aes(Date,PC,color = Date)) + 
+  theme_bw()
+
 # We might need to move forward
