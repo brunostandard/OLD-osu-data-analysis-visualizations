@@ -1,5 +1,10 @@
 Osu! Data Analysis (version 0.00)
 
+IMPORTANT 
+----------------------------------------------------------------
+
+This (light) data analysis has been superseded by the `osu_data_mining` and `osu_data_visualizations` repositories. I am leaving this repo open to the public for educational purposes. It’s also a way to show how my depth of analysis has been improved. From here on, I don’t plan to work with this repo. I might update the README.md, but that about it.  
+
 Developer
 ----------------------------------------------------------------
 M.C. 
